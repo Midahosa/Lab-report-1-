@@ -1,0 +1,229 @@
+#include <Wire.h>     // include Wire library
+#define SLAVE_ADDRESS 0x04 //Arduino Nano slave address
+#define LED_PIN 32 //Pin connected to the yellow led on top PCB
+
+// defines pins numbers
+const int trigPin = 5;
+const int echoPin = 18;
+// defines variables
+long duration;
+int distance1;
+byte speedSetting = 0;  //initial speed = 0
+bool blinkState = false;
+bool stopper = true;
+bool stage = true;
+bool stage2 = true;
+bool stage3  = true;
+bool stage4 = true;
+unsigned long startTime; // store the current time
+void setup() {
+  pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
+  pinMode(echoPin, INPUT); // Sets the echoPin as an Input
+  // configure Arduino LED pin for output
+  pinMode(LED_PIN, OUTPUT);
+  Wire.begin();// join i2c bus (address optional for master)
+  Serial.begin(9600);
+  unsigned long startTime = millis(); // store the current time
+}
+void loop() {
+  unsigned long currentTime = millis(); // update the current time
+  //Go forwards for 1 seconds
+  if (currentTime - startTime < 1000) { // check if 1 second has elapsed
+    //Go Forwards
+    byte xi = 0 ;// 16 -9 bit sent to slave 
+    byte yi = 0 ;// 16 -9 bit sent to slave 
+    byte xO = 255 ;// 1 - 8 bit sent to slave
+    byte yO = 100 ;// 1 - 8 bit sent to slave
+    byte zi = 0;// 16 -9 bit sent to slave 
+    byte zO = 99;// 1 - 8 bit sent to slave
+    Wire.beginTransmission(0x04); // transmit to slave device address 4
+    Wire.write(xi);// 16 -9 bit sent to slave 
+    Wire.write(xO);// 1 - 8 bit sent to slave
+    Wire.write(yi);// 16 -9 bit sent to slave 
+    Wire.write(yO);// 1 - 8 bit sent to slave
+    Wire.write(zi);// 16 -9 bit sent to slave 
+    Wire.write(zO);// 1 - 8 bit sent to slave
+    Wire.endTransmission();       // end transmission
+    delay(1000);
+
+  }
+ //Turn 180 degrees
+  while ( stage == true )
+  {
+    byte xi = 0 ;// 16 -9 bit sent to slave                
+    byte yi = 0 ;// 16 -9 bit sent to slave 
+    byte xO = 99 ;// 1 - 8 bit sent to slave
+    byte yO = 99;// 1 - 8 bit sent to slave
+    byte zi = 0;// 16 -9 bit sent to slave 
+    byte zO = 18;// 1 - 8 bit sent to slave
+    Wire.beginTransmission(0x04); // transmit to slave device address 4
+    Wire.write(xi);// 16 -9 bit sent to slave 
+    Wire.write(xO);// 1 - 8 bit sent to slave
+    Wire.write(yi);// 16 -9 bit sent to slave 
+    Wire.write(yO);// 1 - 8 bit sent to slave
+    Wire.write(zi);// 16 -9 bit sent to slave 
+    Wire.write(zO);// 1 - 8 bit sent to slave
+    Wire.endTransmission();       // end transmission
+    delay(8000);
+    stage = false;// exit while loop
+  }
+  //Stop motors or reverse until obstacle is 5cm away from vehicle
+  if ( stage2 == true )
+  {
+    while (stopper == true )
+    {
+      // Clears the trigPin
+      digitalWrite(trigPin, LOW);
+      delayMicroseconds(2);
+      // Sets the trigPin on HIGH state for 10 micro seconds
+      digitalWrite(trigPin, HIGH);
+      delayMicroseconds(10);
+      digitalWrite(trigPin, LOW);
+      // Reads the echoPin, returns the sound wave travel time in microseconds
+      duration = pulseIn(echoPin, HIGH);
+      // Calculating the distance
+      distance1 = duration * 0.034 / 2;
+      // Prints the distance on the Serial Monitor
+      Serial.print("Distance: ");
+      Serial.println(distance1);
+
+
+      if ( distance1 <= 5 )
+      {
+        //stop motor
+        byte xi = 0 ;// 16 -9 bit sent to slave 
+        byte yi = 0 ;// 16 -9 bit sent to slave 
+        byte xO = 0 ;// 1 - 8 bit sent to slave
+        byte yO = 0 ;// 1 - 8 bit sent to slave
+        byte zi = 0;// 16 -9 bit sent to slave 
+        byte zO = 99;// 1 - 8 bit sent to slave
+        Wire.beginTransmission(0x04); // transmit to slave device address 4
+        Wire.write(xi);// 16 -9 bit sent to slave 
+        Wire.write(xO);// 1 - 8 bit sent to slave
+        Wire.write(yi);// 16 -9 bit sent to slave 
+        Wire.write(yO);// 1 - 8 bit sent to slave
+        Wire.write(zi);// 16 -9 bit sent to slave 
+        Wire.write(zO);// 1 - 8 bit sent to slave
+        Wire.endTransmission();       // end transmission
+        delay(3000);
+        stopper = false;//exit while loop
+      }
+      else
+      {
+        byte xi = -1 ;// 16 -9 bit sent to slave 
+        byte yi = -1 ;// 16 -9 bit sent to slave 
+        byte xO = 150 ;// 1 - 8 bit sent to slave
+        byte yO = 150 ;// 1 - 8 bit sent to slave
+        byte zi = 0;// 16 -9 bit sent to slave 
+        byte zO = 99;// 1 - 8 bit sent to slave
+        Wire.beginTransmission(0x04); // transmit to slave device address 4
+        Wire.write(xi);// 16 -9 bit sent to slave 
+        Wire.write(xO);// 1 - 8 bit sent to slave
+        Wire.write(yi);// 16 -9 bit sent to slave 
+        Wire.write(yO);// 1 - 8 bit sent to slave
+        Wire.write(zi);// 16 -9 bit sent to slave 
+        Wire.write(zO);// 1 - 8 bit sent to slave
+        Wire.endTransmission();       // end transmission
+        delay(100);
+      }
+
+    }
+    stage2 = false;
+  }
+  //turn 90 degrees 
+  while (stage3 == true)
+  {
+    // Clears the trigPin
+    digitalWrite(trigPin, LOW);
+    delayMicroseconds(2);
+    // Sets the trigPin on HIGH state for 10 micro seconds
+    digitalWrite(trigPin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin, LOW);
+    // Reads the echoPin, returns the sound wave travel time in microseconds
+    duration = pulseIn(echoPin, HIGH);
+    // Calculating the distance
+    distance1 = duration * 0.034 / 2;
+    // Prints the distance on the Serial Monitor
+    Serial.print("Distance: ");
+    Serial.println(distance1);
+    if (distance1 <= 5  )
+    {
+
+      // Turn clockwise 90 degrees
+      byte xi = 0;// 16 -9 bit sent to slave 
+      byte yi = 0;// 16 -9 bit sent to slave 
+      byte xO = 100;// 1 - 8 bit sent to slave
+      byte yO = 100;// 1 - 8 bit sent to slave
+      byte zi = 0;// 16 -9 bit sent to slave 
+      byte zO = 180;// 1 - 8 bit sent to slave
+      Wire.beginTransmission(0x04); // transmit to slave device address 4
+      Wire.write(xi);// 16 -9 bit sent to slave 
+      Wire.write(xO);// 1 - 8 bit sent to slave
+      Wire.write(yi);// 16 -9 bit sent to slave 
+      Wire.write(yO);// 1 - 8 bit sent to slave
+      Wire.write(zi);// 16 -9 bit sent to slave 
+      Wire.write(zO);// 1 - 8 bit sent to slave
+      Wire.endTransmission();// end transmission
+      delay(4000);
+      stage3 = false;//exit while loop
+    }
+    else
+    {
+
+      byte xi = -1 ;// 16 -9 bit sent to slave 
+      byte yi = -1 ;// 16 -9 bit sent to slave 
+      byte xO = 150 ;// 1 - 8 bit sent to slave
+      byte yO = 150 ;// 1 - 8 bit sent to slave
+      byte zi = 0;// 16 -9 bit sent to slave 
+      byte zO = 99;// 1 - 8 bit sent to slave
+      Wire.beginTransmission(0x04); // transmit to slave device address 4
+      Wire.write(xi);// 16 -9 bit sent to slave 
+      Wire.write(xO);// 1 - 8 bit sent to slave
+      Wire.write(yi);// 16 -9 bit sent to slave 
+      Wire.write(yO);// 1 - 8 bit sent to slave
+      Wire.write(zi);// 16 -9 bit sent to slave 
+      Wire.write(zO);// 1 - 8 bit sent to slave
+      Wire.endTransmission();// end transmission
+      delay(100);
+
+    }
+  }
+  if (stage4 == true)
+  {
+    //Go Backwards approximately 30cm
+    byte xi = -1 ;// 16 -9 bit sent to slave 
+    byte yi = -1 ;// 16 -9 bit sent to slave 
+    byte xO = 150 ;// 1 - 8 bit sent to slave
+    byte yO = 150 ;// 1 - 8 bit sent to slave
+    byte zi = 0;// 16 -9 bit sent to slave 
+    byte zO = 99;// 1 - 8 bit sent to slave
+    Wire.beginTransmission(0x04); // transmit to slave device address 4
+    Wire.write(xi);// 16 -9 bit sent to slave 
+    Wire.write(xO);// 1 - 8 bit sent to slave
+    Wire.write(yi);// 16 -9 bit sent to slave 
+    Wire.write(yO);// 1 - 8 bit sent to slave
+    Wire.write(zi);// 16 -9 bit sent to slave 
+    Wire.write(zO);// 1 - 8 bit sent to slave
+    Wire.endTransmission();// end transmission
+    delay(3000);
+    stage4 = false;
+
+  }
+  //stop motor
+  byte xi = 0;// 16 -9 bit sent to slave 
+  byte yi = 0;// 16 -9 bit sent to slave 
+  byte xO = 0;// 1 - 8 bit sent to slave
+  byte yO = 0;// 1 - 8 bit sent to slave
+  byte zi = 0;// 16 -9 bit sent to slave 
+  byte zO = 99;// 1 - 8 bit sent to slave
+  Wire.beginTransmission(0x04); // transmit to slave device address 4
+  Wire.write(xi);// 16 -9 bit sent to slave 
+  Wire.write(xO);// 1 - 8 bit sent to slave
+  Wire.write(yi);// 16 -9 bit sent to slave 
+  Wire.write(yO);// 1 - 8 bit sent to slave
+  Wire.write(zi);// 16 -9 bit sent to slave 
+  Wire.write(zO);// 1 - 8 bit sent to slave
+  Wire.endTransmission();// end transmission
+  delay(5000000);
+}
